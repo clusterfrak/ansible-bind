@@ -104,7 +104,7 @@ This playbook will set up Bind and FreeIPA, Bind will be configured to use the s
 
 This playbook will set up Bind and FreeIPA, Bind will be configured to use the servers IP address, and automatically configured to use the customdomain.com domain. The servers hostname along with alias's such as ns1.customdomain.com, and ipa.customdomain.com will be configured using the IP of this server. The PTR zone will be automatically configured based on this servers default IPv4 Address/netmask
 
-`export SITE_NAME="customdomain.com"`
+`export DOMAIN="customdomain.com"`
 
 	- hosts: dns-servers
 	      become: true
