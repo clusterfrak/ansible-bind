@@ -13,7 +13,7 @@
   register: ptr_id
 
 # BIND Installation
-- name: adding CentOS6 epel repo
+- name: adding epel repo
   package: name={{item}} state=installed
   with_items:
     - epel-release

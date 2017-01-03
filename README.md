@@ -94,7 +94,7 @@ No other roles required in order to run this role
 
 This playbook will set up Bind and FreeIPA, Bind will be configured to use the servers IP address, and automatically configured to use the mydomain.local domain. The servers hostname along with alias's such as ns1.mydomain.local, and ipa.mydomain.local will be configured using the IP of this server. The PTR zone will be automatically configured based on this servers default IPv4 Address/netmask
 
-    - hosts: servers
+    - hosts: dns-servers
       become: true
      roles:
        - clusterfrak.bind
@@ -106,7 +106,7 @@ This playbook will set up Bind and FreeIPA, Bind will be configured to use the s
 
 `export SITE_NAME="customdomain.com"`
 
-	- hosts: servers
+	- hosts: dns-servers
 	      become: true
 	     roles:
 	       - clusterfrak.bind
