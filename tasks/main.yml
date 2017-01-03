@@ -78,4 +78,5 @@
   with_items:
     - 53/udp
 
-
+- name: reload the firewall
+  command: firewall-cmd --reload
