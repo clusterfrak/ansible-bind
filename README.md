@@ -26,6 +26,10 @@ sudo yum -y install ansible
 
 <br>
 
+__2. &nbsp;&nbsp; Ensure /etc/sysconfig/networking-scripts/ifcfg-{adapterID} exits__
+
+<br>
+
 __3. &nbsp;&nbsp; Create directory structure:__ <br>
 
 Create the directory structure that you are going to use. In this tutorial we are going to set up ansible roles in __/etc/ansible/roles__
@@ -65,8 +69,8 @@ The clusterfrak.bind role uses a few environment variables to automatically conf
 
 > Mapped Shell Environment Variables:
 
- - DOMAIN - FQDN that Bind will be configured to provide services for. This MUST be an FQDN [default:mydomain.local]
- - SECONDARY_DNS - Secondary DNS server address. This can be configured to a second BIND server or AD [default:8.8.8.8]
+ - ${DOMAIN}: FQDN that Bind will be configured to provide services for. This MUST be an FQDN [default:mydomain.local]
+ - ${SECONDARY_DNS}: Secondary DNS server address. This can be configured to a second BIND server or AD [default:8.8.8.8]
 
 <br>
 
@@ -94,15 +98,15 @@ No other roles required in order to run this role
 
 This playbook will set up Bind and FreeIPA, Bind will be configured to use the servers IP address, and automatically configured to use the mydomain.local domain. The servers hostname along with alias's such as ns1.mydomain.local, and ipa.mydomain.local will be configured using the IP of this server. The PTR zone will be automatically configured based on this servers default IPv4 Address/netmask
 
-    - hosts: dns-servers
+    - hosts: localhost
       become: true
-     roles:
+      roles:
        - clusterfrak.bind
 
 ## Example Playbook With Custom Values
 -------
 
-This playbook will set up Bind and FreeIPA, Bind will be configured to use the servers IP address, and automatically configured to use the customdomain.com domain. The servers hostname along with alias's such as ns1.customdomain.com, and ipa.customdomain.com will be configured using the IP of this server. The PTR zone will be automatically configured based on this servers default IPv4 Address/netmask
+This playbook will set up Bind and FreeIPA, Bind will be configured to use the servers IP address, and automatically configured to use the customdomain.com domain. The servers hostname along with alias's such as ns1.customdomain.com, and ipa.customdomain.com will be configured using the IP of this server. The PTR zone will be automatically configured based on this servers default IPv4 Address/netmask. This assumes that your DNS servers are set in the [dns-servers] group in your inventory file.
 
 `export DOMAIN="customdomain.com"`
 
@@ -122,4 +126,3 @@ BSD
 [Rich Nason](http://nason.co) <br>
 [Clusterfrak Doc Site](http://clusterfrak.com) <br>
 [Container Doc Site](http://appcontainers.com) <br>
-
