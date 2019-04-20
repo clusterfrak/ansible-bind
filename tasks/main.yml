@@ -19,7 +19,7 @@
 
 # BIND Installation
 - name: adding epel repo
-  yum: 
+  yum:
     name:
       - epel-release
     state: present
