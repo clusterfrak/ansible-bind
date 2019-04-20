@@ -106,14 +106,17 @@ No other roles required in order to run this role
 This playbook will set up Bind and FreeIPA, Bind will be configured to use the servers IP address, and automatically configured to use the mydomain.local domain. The servers hostname along with alias's such as ns1.mydomain.local, and ipa.mydomain.local will be configured using the IP of this server. The PTR zone will be automatically configured based on this servers default IPv4 Address/netmask
 
 `ansible-galaxy install --ignore-certs clusterfrak.bind`
-`cd /etc/ansible && vi install.yml`
 
 ```bash
+cat >> /etc/ansible/install.yml <<EOL
 - hosts: localhost
   become: true
   roles:
     - clusterfrak.bind
+EOL
 ```
+
+`cd /etc/ansible && ansible-playbook install.yml`
 
 <br>
 
@@ -125,14 +128,17 @@ This playbook will set up Bind and FreeIPA, Bind will be configured to use the s
 
 `export DOMAIN="customdomain.com"`
 `ansible-galaxy install --ignore-certs clusterfrak.bind`
-`cd /etc/ansible && vi install.yml`
 
 ```bash
+cat >> /etc/ansible/install.yml <<EOL
 - hosts: dns-servers
   become: true
   roles:
     - clusterfrak.bind
+EOL
 ```
+
+`cd /etc/ansible && ansible-playbook install.yml`
 
 <br>
 

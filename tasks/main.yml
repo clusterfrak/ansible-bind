@@ -6,11 +6,10 @@
 #   register: named_stat
 
 # Check to see if firewalld is installed
-- name: Check if firewalld is installed
-  command: rpm -q firewalld
+- name: Check to see if the firewalld package is installed
+  yum:
+    list: firewalld
   register: firewalld_installed
-  failed_when: no
-  changed_when: no
 
 # BIND Installation
 - name: adding epel repo
@@ -90,14 +89,14 @@
   firewalld: service={{ item }} permanent=true state=enabled
   with_items:
     - dns
-  when: firewalld_installed.rc == 0
+  when: firewalld_installed.results | selectattr("yumstate", "match", "installed") | list | length == 0
 
 - name: configuring firewall UDP ports
   firewalld: port={{ item }} permanent=true state=enabled
   with_items:
     - 53/udp
-  when: firewalld_installed.rc == 0
+  when: firewalld_installed.results | selectattr("yumstate", "match", "installed") | list | length == 0
 
 - name: reload the firewall
   command: firewall-cmd --reload
-  when: firewalld_installed.rc == 0
+  when: firewalld_installed.results | selectattr("yumstate", "match", "installed") | list | length == 0
