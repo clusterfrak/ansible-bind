@@ -120,18 +120,30 @@
   failed_when: no
   changed_when: no
 
+- name: stop service firewalld
+  systemd:
+    name: firewalld
+    state: stopped
+  when: '"firewalld" in ansible_facts.packages'
+  failed_when: no
+  changed_when: no
+
 - name: configuring firewall services
-  firewalld: service={{ item }} permanent=true state=enabled
-  with_items:
-    - dns
+  firewalld:
+    service: dns
+    permanent: yes
+    state: enabled
   when: '"firewalld" in ansible_facts.packages'
 
 - name: configuring firewall UDP ports
-  firewalld: port={{ item }} permanent=true state=enabled
-  with_items:
-    - 53/udp
+  firewalld:
+    port: 53/udp
+    permanent: yes
+    state: enabled
   when: '"firewalld" in ansible_facts.packages'
 
-- name: reload the firewall
-  command: firewall-cmd --reload
+- name: start service firewalld
+  systemd:
+    name: firewalld
+    state: started
   when: '"firewalld" in ansible_facts.packages'
