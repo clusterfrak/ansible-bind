@@ -28,15 +28,21 @@
 
 # Set Variables used in various tasks
 - name: gather network cidr
-  shell: ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f2
+  shell: |
+    set -o pipefail
+    ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f2
   register: subnet_cidr
 
 - name: calculate ptr zone
-  shell: ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $3"."$2"."$1}'
+  shell: |
+    set -o pipefail
+    ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $3"."$2"."$1}'
   register: ptr_zone
 
 - name: calculate ptr nameserver id
-  shell: ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $4}'
+  shell: |
+    set -o pipefail
+    ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $4}'
   register: ptr_id
 
 - name: backup named.conf
@@ -61,7 +67,7 @@
   template: src=db.zone.j2 dest=/etc/named/zones/db.{{ domain }} owner=named group=named mode=0644
   notify: restart bind
 
-- name: configure {{domain}} PTR zone
+- name: configure {{ domain }} PTR zone
   template: src=db.ptrzone.j2 dest=/etc/named/zones/db.{{ ptr_zone.stdout }} owner=named group=named mode=0644
   notify: restart bind
 
@@ -69,11 +75,19 @@
   service: name=named state=started enabled=yes
 
 - name: reconfiguring /etc/resolv.conf to use local bind
-  lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }} state=present regexp='^DNS1=' line='DNS1={{ ansible_default_ipv4.address }}'
+  lineinfile:
+    dest: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+    state: present
+    regexp: '^DNS1=' 
+    line: 'DNS1={{ ansible_default_ipv4.address }}'
   notify: restart networking
 
 - name: reconfiguring /etc/resolv.conf to use local search domain
-  lineinfile: dest=/etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }} state=present regexp='^DOMAIN=' line='DOMAIN={{ domain }}'
+  lineinfile:
+    dest: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
+    state: present
+    regexp: '^DOMAIN='
+    line: 'DOMAIN={{ domain }}'
   notify: restart networking
 
 - name: reconfiguring /etc/sysconfig/named selinux
