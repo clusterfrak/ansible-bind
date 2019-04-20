@@ -1,16 +1,16 @@
 ---
-# Set Variables used in various tasks
-- name: gather network cidr
-  shell: ip addr | grep inet | grep {{ansible_default_ipv4.interface}} | awk '{print $2}' | cut -d"/" -f2
-  register: subnet_cidr
+# Check to see if the named.conf file already exists
+# - name: check if named.conf file exists
+#   stat: 
+#     path: /etc/named.conf
+#   register: named_stat
 
-- name: calculate ptr zone
-  shell: ip addr | grep inet | grep {{ansible_default_ipv4.interface}} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $3"."$2"."$1}'
-  register: ptr_zone
-
-- name: calculate ptr nameserver id
-  shell: ip addr | grep inet | grep {{ansible_default_ipv4.interface}} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $4}'
-  register: ptr_id
+# Check to see if firewalld is installed
+- name: Check if firewalld is installed
+  command: rpm -q firewalld
+  register: firewalld_installed
+  failed_when: no
+  changed_when: no
 
 # BIND Installation
 - name: adding epel repo
@@ -23,6 +23,22 @@
   with_items:
     - bind
     - bind-utils
+    - net-tools
+    - iproute
+    - bind-dyndb-ldap
+
+# Set Variables used in various tasks
+- name: gather network cidr
+  shell: ip addr | grep inet | grep {{ansible_default_ipv4.interface}} | awk '{print $2}' | cut -d"/" -f2
+  register: subnet_cidr
+
+- name: calculate ptr zone
+  shell: ip addr | grep inet | grep {{ansible_default_ipv4.interface}} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $3"."$2"."$1}'
+  register: ptr_zone
+
+- name: calculate ptr nameserver id
+  shell: ip addr | grep inet | grep {{ansible_default_ipv4.interface}} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $4}'
+  register: ptr_id
 
 - name: backup named.conf
   copy:
@@ -65,18 +81,23 @@
   lineinfile: dest=/etc/sysconfig/named state=present regexp='^ENABLE_ZONE_WRITE=' line='ENABLE_ZONE_WRITE=yes'
 
 - name: set selinux contexts
-  # seboolean: name=named_write_master_zones state=yes persistent=yes
-  command: setsebool named_write_master_zones 1
+  seboolean: name=named_write_master_zones state=yes persistent=yes
+  # command: setsebool named_write_master_zones 1 || exit 0
+  failed_when: no
+  changed_when: no
 
 - name: configuring firewall services
   firewalld: service={{item}} permanent=true state=enabled
   with_items:
     - dns
+  when: firewalld_installed.rc == 0
 
 - name: configuring firewall UDP ports
   firewalld: port={{item}} permanent=true state=enabled
   with_items:
     - 53/udp
+  when: firewalld_installed.rc == 0
 
 - name: reload the firewall
   command: firewall-cmd --reload
+  when: firewalld_installed.rc == 0
