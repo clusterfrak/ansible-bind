@@ -116,7 +116,6 @@
 
 - name: set selinux contexts
   seboolean: name=named_write_master_zones state=yes persistent=yes
-  # command: setsebool named_write_master_zones 1 || exit 0
   failed_when: no
   changed_when: no
 
