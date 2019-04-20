@@ -10,20 +10,39 @@
   package_facts:
     manager: auto
 
+# Commenting out package as iteration through items is slow, and yum is faster.
+# BIND Installation
+# - name: adding epel repo
+#   package: name={{ item }} state=installed
+#   with_items:
+#     - epel-release
+
 # BIND Installation
 - name: adding epel repo
-  package: name={{ item }} state=installed
-  with_items:
-    - epel-release
+  yum: 
+    name:
+      - epel-release
+    state: present
+
+# Commenting out package as iteration through items is slow, and yum is faster.
+# - name: adding required packages
+#   package: name={{ item }} state=installed
+#   with_items:
+#     - bind
+#     - bind-utils
+#     - net-tools
+#     - iproute
+#     - bind-dyndb-ldap
 
 - name: adding required packages
-  package: name={{ item }} state=installed
-  with_items:
-    - bind
-    - bind-utils
-    - net-tools
-    - iproute
-    - bind-dyndb-ldap
+  yum:
+    name:
+      - bind
+      - bind-utils
+      - net-tools
+      - iproute
+      - bind-dyndb-ldap
+    state: present
 
 # Set Variables used in various tasks
 - name: gather network cidr
