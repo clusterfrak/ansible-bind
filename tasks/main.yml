@@ -6,10 +6,9 @@
 #   register: named_stat
 
 # Check to see if firewalld is installed
-- name: Check to see if the firewalld package is installed
-  yum:
-    list: firewalld
-  register: firewalld_installed
+- name: grab list of installed packages
+  package_facts:
+    manager: auto
 
 # BIND Installation
 - name: adding epel repo
@@ -106,14 +105,14 @@
   firewalld: service={{ item }} permanent=true state=enabled
   with_items:
     - dns
-  when: firewalld_installed.results | selectattr("yumstate", "match", "installed") | list | length == 0
+  when: '"firewalld" in ansible_facts.packages'
 
 - name: configuring firewall UDP ports
   firewalld: port={{ item }} permanent=true state=enabled
   with_items:
     - 53/udp
-  when: firewalld_installed.results | selectattr("yumstate", "match", "installed") | list | length == 0
+  when: '"firewalld" in ansible_facts.packages'
 
 - name: reload the firewall
   command: firewall-cmd --reload
-  when: firewalld_installed.results | selectattr("yumstate", "match", "installed") | list | length == 0
+  when: '"firewalld" in ansible_facts.packages'
