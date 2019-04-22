@@ -1,40 +1,24 @@
 ---
 # Check to see if the named.conf file already exists
-# - name: check if named.conf file exists
-#   stat: 
-#     path: /etc/named.conf
-#   register: named_stat
+- name: Check if the named.conf file exists
+  stat: 
+    path: /etc/named.conf
+  register: named_config
 
 # Check to see if firewalld is installed
-- name: grab list of installed packages
+- name: Grab list of all installed packages
   package_facts:
     manager: auto
 
-# Commenting out package as iteration through items is slow, and yum is faster.
-# BIND Installation
-# - name: adding epel repo
-#   package: name={{ item }} state=installed
-#   with_items:
-#     - epel-release
-
-# BIND Installation
-- name: adding epel repo
+# Epel Repo Install
+- name: Add Epel Yum Repo
   yum:
     name:
       - epel-release
     state: present
 
-# Commenting out package as iteration through items is slow, and yum is faster.
-# - name: adding required packages
-#   package: name={{ item }} state=installed
-#   with_items:
-#     - bind
-#     - bind-utils
-#     - net-tools
-#     - iproute
-#     - bind-dyndb-ldap
-
-- name: adding required packages
+# Bind Install
+- name: Adding required packages
   yum:
     name:
       - bind
@@ -44,82 +28,95 @@
       - bind-dyndb-ldap
     state: present
 
-# Set Variables used in various tasks
-- name: gather network cidr
+# Set Variables used in various Bind config tasks
+- name: Gather network CIDR
   shell: |
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f2
   register: subnet_cidr
   changed_when: False
 
-- name: calculate ptr zone
+- name: Calculate PTR Zone
   shell: |
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $3"."$2"."$1}'
   register: ptr_zone
   changed_when: False
 
-- name: calculate ptr nameserver id
+- name: Calculate PTR nameserver Id
   shell: |
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $4}'
   register: ptr_id
   changed_when: False
 
-- name: backup named.conf
+# Back Named.conf
+- name: Backup named.conf
   copy:
     remote_src: True
     src: /etc/named.conf
     dest: /etc/named.conf.backup
-    # when: named_stat.stat.exists == False
+    when: named_config.stat.exists
 
-- name: configure named.conf
+# Configure Bind
+- name: Configure named.conf
   template: src=named.conf.j2 dest=/etc/named.conf owner=named group=named mode=0775
-  notify: restart bind
+  notify: Restart Bind Service
 
-- name: configure named.conf.local
+- name: Configure named.conf.local
   template: src=named.conf.local.j2 dest=/etc/named/named.conf.local owner=named group=named mode=0775
-  notify: restart bind
+  notify: Restart Bind Service
 
-- name: create zones directory to store zone data
+- name: Create zones directory to store zone data
   file: path=/etc/named/zones state=directory owner=named group=named mode=0775 recurse=yes
 
-- name: configure {{ domain }} zone
+- name: Configure {{ domain }} zone
   template: src=db.zone.j2 dest=/etc/named/zones/db.{{ domain }} owner=named group=named mode=0644
-  notify: restart bind
+  notify: Restart Bind Service
 
-- name: configure {{ domain }} PTR zone
+- name: Configure {{ domain }} PTR zone
   template: src=db.ptrzone.j2 dest=/etc/named/zones/db.{{ ptr_zone.stdout }} owner=named group=named mode=0644
-  notify: restart bind
+  notify: Restart Bind Service
 
-- name: start bind
+- name: Start Bind Service
   service: name=named state=started enabled=yes
 
-- name: reconfiguring /etc/resolv.conf to use local bind
+# Restart Bind Service
+- name: Restart Bind Service
+  meta: flush_handlers # Force restart handlers to restart now instead of at end of playbook run.
+
+# Configure local resolution to use Bind
+- name: Reconfigure /etc/resolv.conf to use local Bind service
   lineinfile:
     dest: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
     state: present
     regexp: '^DNS1='
     line: 'DNS1={{ ansible_default_ipv4.address }}'
-  notify: restart networking
+  notify: Restart Networking Service
 
-- name: reconfiguring /etc/resolv.conf to use local search domain
+- name: Reconfigure /etc/resolv.conf to use local search domain
   lineinfile:
     dest: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
     state: present
     regexp: '^DOMAIN='
     line: 'DOMAIN={{ domain }}'
-  notify: restart networking
+  notify: Restart Networking Service
+  
+# Restart Networking Service  
+- name: Restart Networking Service
+  meta: flush_handlers # Force restart handlers to restart now instead of at end of playbook run.
 
-- name: reconfiguring /etc/sysconfig/named selinux
+# Set SELinux Contexts
+- name: Reconfigure /etc/sysconfig/named SELinux
   lineinfile: dest=/etc/sysconfig/named state=present regexp='^ENABLE_ZONE_WRITE=' line='ENABLE_ZONE_WRITE=yes'
 
-- name: set selinux contexts
+- name: Set SELinux contexts
   seboolean: name=named_write_master_zones state=yes persistent=yes
   failed_when: no
   changed_when: no
 
-- name: stop service firewalld
+# Configure Firewalld
+- name: Stop firewalld service if present
   systemd:
     name: firewalld
     state: stopped
@@ -127,21 +124,21 @@
   failed_when: no
   changed_when: no
 
-- name: configuring firewall services
+- name: Add DNS service to firewalld if present
   firewalld:
     service: dns
     permanent: yes
     state: enabled
   when: '"firewalld" in ansible_facts.packages'
 
-- name: configuring firewall UDP ports
+- name: Add DNS UDP port to firewalld if present
   firewalld:
     port: 53/udp
     permanent: yes
     state: enabled
   when: '"firewalld" in ansible_facts.packages'
 
-- name: start service firewalld
+- name: Start firewalld service if present
   systemd:
     name: firewalld
     state: started

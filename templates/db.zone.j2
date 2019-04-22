@@ -1,5 +1,5 @@
 ;
-; BIND data file for local loopback interface
+; Bind data file for local loopback interface
 ;
 $ORIGIN {{domain}}.
 $TTL    604800
@@ -24,5 +24,6 @@ ns1.{{domain}}.		IN      A       {{ansible_default_ipv4.address}}
 ; {{ansible_default_ipv4.network}}/{{subnet_cidr.stdout}} - A records
 {{ansible_hostname}} 		IN	A	{{ansible_default_ipv4.address}}
 ipa             	IN      A   	{{ansible_default_ipv4.address}}
+freeipa             IN      A   	{{ansible_default_ipv4.address}}
 ;server1         	IN      A       1.2.3.4
 ;server2         	IN      A       1.2.3.5
