@@ -1,10 +1,4 @@
 ---
-# Check to see if the named.conf file already exists
-- name: Check if the named.conf file exists
-  stat: 
-    path: /etc/named.conf
-  register: named_config
-
 # Check to see if firewalld is installed
 - name: Grab list of all installed packages
   package_facts:
@@ -56,7 +50,6 @@
     remote_src: True
     src: /etc/named.conf
     dest: /etc/named.conf.backup
-    when: named_config.stat.exists
 
 # Configure Bind
 - name: Configure named.conf
@@ -101,6 +94,19 @@
     regexp: '^DOMAIN='
     line: 'DOMAIN={{ domain }}'
   notify: Restart Networking Service
+
+# Stat the /etc/sysconfig/network-scripts/ifcfg-eth0
+- name: Check to see if eth0 exits
+  stat: path=/etc/sysconfig/network-scripts/ifcfg-eth0
+  register: eth0_config
+
+# Remove eth0 config if its not the ansible interface.
+# The playbook will fail in AWS if the eth0 config is present and the adapter is not eth0
+- name: Remove eth0 if ipv4 interface is not eth0
+  file:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    state: absent
+  when: not "{{ 'eth0' in ansible_default_ipv4.interface }}"
   
 # Restart Networking Service  
 - name: Restart Networking Service
