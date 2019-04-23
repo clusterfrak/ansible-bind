@@ -101,7 +101,7 @@
   file:
     path: /etc/sysconfig/network-scripts/ifcfg-eth0
     state: absent
-  when: not "{{ 'eth0' in ansible_default_ipv4.interface }}"
+  when: not ansible_default_ipv4.interface == 'eth0'
   
 # Restart Networking Service  
 - name: Restart Networking Service
