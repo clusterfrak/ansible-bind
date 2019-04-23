@@ -95,11 +95,6 @@
     line: 'DOMAIN={{ domain }}'
   notify: Restart Networking Service
 
-# Stat the /etc/sysconfig/network-scripts/ifcfg-eth0
-- name: Check to see if eth0 exits
-  stat: path=/etc/sysconfig/network-scripts/ifcfg-eth0
-  register: eth0_config
-
 # Remove eth0 config if its not the ansible interface.
 # The playbook will fail in AWS if the eth0 config is present and the adapter is not eth0
 - name: Remove eth0 if ipv4 interface is not eth0
