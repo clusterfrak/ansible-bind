@@ -49,6 +49,7 @@
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f2
   register: subnet_cidr
   failed_when: "'FAILED' in subnet_cidr.stderr"
+  ignore_warnings: yes
 
 - debug:
     msg: "Network CIDR set to: {{ subnet_cidr.stdout }}"
@@ -59,6 +60,7 @@
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $3"."$2"."$1}'
   register: ptr_zone
   failed_when: "'FAILED' in ptr_zone.stderr"
+  ignore_warnings: yes
 
 - debug:
     msg: "PTR Zone set to: {{ ptr_zone.stdout }}"
@@ -69,6 +71,7 @@
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $4}'
   register: ptr_id
   failed_when: "'FAILED' in ptr_id.stderr"
+  ignore_warnings: yes
 
 - debug:
     msg: "PTR Nameserver ID set to: {{ ptr_id.stdout }}"
@@ -109,13 +112,13 @@
 
 # Check the Bind Service Status
 - name: Check Bind Service
-  shell: service named status
+  command: service named status
   register: bind_service_status
   when: ansible_distribution_major_version < '7'
   ignore_errors: yes
 
 - name: Check Bind Service
-  shell: systemctl status named.service
+  command: systemctl status named.service
   register: bind_service_status
   when: ansible_distribution_major_version > '6'
   ignore_errors: yes
@@ -160,13 +163,13 @@
 
 # Check the Network Service Status
 - name: Check Network Service
-  shell: service network status
+  command: service network status
   register: network_service_status
   when: ansible_distribution_major_version < '7'
   ignore_errors: yes
 
 - name: Check Network Service
-  shell: systemctl status network.service
+  command: systemctl status network.service
   register: network_service_status
   when: ansible_distribution_major_version > '6'
   ignore_errors: yes
