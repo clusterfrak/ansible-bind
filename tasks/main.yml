@@ -7,7 +7,8 @@
   register: aws_uri_check
   ignore_errors: yes
 
-- set_fact:
+- name: Set Flag if running in AWS
+  set_fact:
     is_aws: "{{ aws_uri_check.status == 200 }}"
   when: not "'FAILED' in aws_uri_check.stderr"
   ignore_errors: yes
@@ -150,7 +151,7 @@
     path: /etc/sysconfig/network-scripts/ifcfg-eth0
     state: absent
   when: not ansible_default_ipv4.interface == 'eth0' and is_aws
-  
+
 # Restart Networking Service
 # We can't restart networking on an EC2 instance, so if running in AWS, skip this step.
 - name: Restart Networking Service
@@ -187,20 +188,13 @@
   systemd:
     name: firewalld
     state: stopped
+  register: firewalld_service_stop
   when:
     - ansible_distribution_major_version > '6'
     - '"firewalld" in ansible_facts.packages'
-
-- name: Check Firewalld Service
-  shell: systemctl status firewalld.service
-  register: firewalld_service_status
-  when:
-    - ansible_distribution_major_version > '6'
-    - '"firewalld" in ansible_facts.packages'
-  ignore_errors: yes
 
 - debug:
-    msg: "{{ firewalld_service_status.stdout }}"
+    msg: "{{ firewalld_service_stop.status }}"
   when:
     - ansible_distribution_major_version > '6'
     - '"firewalld" in ansible_facts.packages'
@@ -228,21 +222,14 @@
   systemd:
     name: firewalld
     state: started
-  when:
-    - ansible_distribution_major_version > '6'
-    - '"firewalld" in ansible_facts.packages'
-  ignore_errors: yes
-
-- name: Check Firewalld Service post restart
-  shell: systemctl status firewalld.service
-  register: firewalld_service_restart_status
+  register: firewalld_service_start
   when:
     - ansible_distribution_major_version > '6'
     - '"firewalld" in ansible_facts.packages'
   ignore_errors: yes
 
 - debug:
-    msg: "{{ firewalld_service_restart_status.stdout }}"
+    msg: "{{ firewalld_service_start.status }}"
   when:
     - ansible_distribution_major_version > '6'
     - '"firewalld" in ansible_facts.packages'
