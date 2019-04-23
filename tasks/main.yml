@@ -47,9 +47,10 @@
   shell: |
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f2
+  args:
+    warn: no
   register: subnet_cidr
   failed_when: "'FAILED' in subnet_cidr.stderr"
-  ignore_warnings: yes
 
 - debug:
     msg: "Network CIDR set to: {{ subnet_cidr.stdout }}"
@@ -58,9 +59,10 @@
   shell: |
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $3"."$2"."$1}'
+  args:
+    warn: no
   register: ptr_zone
   failed_when: "'FAILED' in ptr_zone.stderr"
-  ignore_warnings: yes
 
 - debug:
     msg: "PTR Zone set to: {{ ptr_zone.stdout }}"
@@ -69,9 +71,10 @@
   shell: |
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $4}'
+  args:
+    warn: no
   register: ptr_id
   failed_when: "'FAILED' in ptr_id.stderr"
-  ignore_warnings: yes
 
 - debug:
     msg: "PTR Nameserver ID set to: {{ ptr_id.stdout }}"
