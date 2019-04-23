@@ -26,10 +26,8 @@
       - "is_aws flag set to: {{ 'True' if aws_uri_check.status == 200 else 'False'  }}"
 
 # =====================================
-# Bind Service Install
-# =====================================
 # Firewalld Service Check
-# -------------------------------------
+# =====================================
 - name: Gathering list of all installed packages...
   package_facts:
     manager: auto
@@ -44,9 +42,11 @@
     msg:
       - "is_firewalld flag set to: {{ 'True' if 'firewalld' in ansible_facts.packages else 'False'  }}"
 
+# =====================================
+# Bind Service Install
 # -------------------------------------
 # Install Bind and Dependancy Packages
-# -------------------------------------
+# =====================================
 - name: Installing Epel Yum Repository...
   yum:
     name:
