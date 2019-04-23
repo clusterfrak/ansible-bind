@@ -48,7 +48,7 @@
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f2
   args:
-    warn: no
+    warn: False
   register: subnet_cidr
   failed_when: "'FAILED' in subnet_cidr.stderr"
 
@@ -60,7 +60,7 @@
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $3"."$2"."$1}'
   args:
-    warn: no
+    warn: False
   register: ptr_zone
   failed_when: "'FAILED' in ptr_zone.stderr"
 
@@ -72,7 +72,7 @@
     set -o pipefail
     ip addr | grep inet | grep {{ ansible_default_ipv4.interface }} | awk '{print $2}' | cut -d"/" -f1 | awk -F"." '{print $4}'
   args:
-    warn: no
+    warn: False
   register: ptr_id
   failed_when: "'FAILED' in ptr_id.stderr"
 
@@ -116,12 +116,16 @@
 # Check the Bind Service Status
 - name: Check Bind Service
   command: service named status
+  args:
+    warn: False
   register: bind_service_status
   when: ansible_distribution_major_version < '7'
   ignore_errors: yes
 
 - name: Check Bind Service
   command: systemctl status named.service
+  args:
+    warn: False
   register: bind_service_status
   when: ansible_distribution_major_version > '6'
   ignore_errors: yes
@@ -167,12 +171,16 @@
 # Check the Network Service Status
 - name: Check Network Service
   command: service network status
+  args:
+    warn: False
   register: network_service_status
   when: ansible_distribution_major_version < '7'
   ignore_errors: yes
 
 - name: Check Network Service
   command: systemctl status network.service
+  args:
+    warn: False
   register: network_service_status
   when: ansible_distribution_major_version > '6'
   ignore_errors: yes
