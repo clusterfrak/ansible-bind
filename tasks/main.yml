@@ -51,6 +51,7 @@
     warn: False
   register: subnet_cidr
   failed_when: "'FAILED' in subnet_cidr.stderr"
+  changed_when: False
 
 - debug:
     msg: "Network CIDR set to: {{ subnet_cidr.stdout }}"
@@ -63,6 +64,7 @@
     warn: False
   register: ptr_zone
   failed_when: "'FAILED' in ptr_zone.stderr"
+  changed_when: False
 
 - debug:
     msg: "PTR Zone set to: {{ ptr_zone.stdout }}"
@@ -75,6 +77,7 @@
     warn: False
   register: ptr_id
   failed_when: "'FAILED' in ptr_id.stderr"
+  changed_when: False
 
 - debug:
     msg: "PTR Nameserver ID set to: {{ ptr_id.stdout }}"
