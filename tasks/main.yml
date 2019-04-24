@@ -172,6 +172,7 @@
 - name: Verifying ifcfg-{{ ansible_default_ipv4.interface }} changes...
   command: cat /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
   register: ifcfg_details
+  failed_when: "'FAILED' in ifcfg_details.stderr"
   changed_when: False
 
 - name: /etc/sysconfig/network-scripts/ifcfg-{{ ansible_default_ipv4.interface }}
